@@ -220,6 +220,110 @@ class ZendeskApiMarkdownCrawler:
         with open(file_path, "w", encoding="utf-8") as file:
             json.dump(payload, file, ensure_ascii=False, indent=2)
 
+    @staticmethod
+    def _to_markdown_scalar(value: Any) -> str:
+        if value is None:
+            return "-"
+
+        text = str(value).strip()
+        if not text:
+            return "-"
+
+        text = text.replace("\r\n", "\n").replace("\r", "\n")
+        return text if "\n" not in text else text.replace("\n", " ")
+
+    def _build_structure_markdown(self, structure_payload: dict[str, Any]) -> str:
+        categories_raw = structure_payload.get("categories")
+        sections_raw = structure_payload.get("sections")
+
+        categories: list[dict[str, Any]] = []
+        if isinstance(categories_raw, list):
+            for item in cast(list[Any], categories_raw):
+                if isinstance(item, dict):
+                    categories.append(cast(dict[str, Any], item))
+
+        sections: list[dict[str, Any]] = []
+        if isinstance(sections_raw, list):
+            for item in cast(list[Any], sections_raw):
+                if isinstance(item, dict):
+                    sections.append(cast(dict[str, Any], item))
+
+        lines: list[str] = [
+            "# Knowledge Base Structure",
+            "",
+            f"- help_center_url: {self._to_markdown_scalar(structure_payload.get('help_center_url'))}",
+            f"- locale: {self._to_markdown_scalar(structure_payload.get('locale'))}",
+            f"- fetched_at: {self._to_markdown_scalar(structure_payload.get('fetched_at'))}",
+            f"- category_count: {self._to_markdown_scalar(structure_payload.get('category_count'))}",
+            f"- section_count: {self._to_markdown_scalar(structure_payload.get('section_count'))}",
+            "",
+            "## Categories",
+            "",
+        ]
+
+        if not categories:
+            lines.append("(Tidak ada data categories)")
+            lines.append("")
+        else:
+            for idx, item in enumerate(categories, start=1):
+                category_name = self._to_markdown_scalar(item.get("name"))
+                lines.extend(
+                    [
+                        f"### Category {idx}: {category_name}",
+                        "",
+                        f"- id: {self._to_markdown_scalar(item.get('id'))}",
+                        f"- name: {self._to_markdown_scalar(item.get('name'))}",
+                        f"- description: {self._to_markdown_scalar(item.get('description'))}",
+                        f"- html_url: {self._to_markdown_scalar(item.get('html_url'))}",
+                        f"- position: {self._to_markdown_scalar(item.get('position'))}",
+                        f"- created_at: {self._to_markdown_scalar(item.get('created_at'))}",
+                        f"- updated_at: {self._to_markdown_scalar(item.get('updated_at'))}",
+                        "",
+                    ]
+                )
+
+        lines.extend(["## Sections", ""])
+
+        if not sections:
+            lines.append("(Tidak ada data sections)")
+            lines.append("")
+        else:
+            for idx, item in enumerate(sections, start=1):
+                section_name = self._to_markdown_scalar(item.get("name"))
+                lines.extend(
+                    [
+                        f"### Section {idx}: {section_name}",
+                        "",
+                        f"- id: {self._to_markdown_scalar(item.get('id'))}",
+                        f"- category_id: {self._to_markdown_scalar(item.get('category_id'))}",
+                        f"- name: {self._to_markdown_scalar(item.get('name'))}",
+                        f"- description: {self._to_markdown_scalar(item.get('description'))}",
+                        f"- html_url: {self._to_markdown_scalar(item.get('html_url'))}",
+                        f"- position: {self._to_markdown_scalar(item.get('position'))}",
+                        f"- created_at: {self._to_markdown_scalar(item.get('created_at'))}",
+                        f"- updated_at: {self._to_markdown_scalar(item.get('updated_at'))}",
+                        "",
+                    ]
+                )
+
+        return "\n".join(lines).strip() + "\n"
+
+    def _save_structure_markdown_chunks(self, structure_payload: dict[str, Any]) -> None:
+        markdown_text = self._build_structure_markdown(structure_payload)
+        parts = self._split_text_by_words(markdown_text)
+
+        for index, part in enumerate(parts, start=1):
+            file_path = self.output_dir / f"knowledge_base_structure_part_{index:03d}.md"
+            content = part.strip() + "\n"
+
+            with open(file_path, "w", encoding="utf-8") as file:
+                file.write(content)
+
+            print(
+                f"[SAVED] {file_path.name} "
+                f"(kata: {self._count_words(content):,}, lokasi: {self.output_dir.as_posix()})"
+            )
+
     def _fetch_paginated_collection(
         self,
         client: httpx.Client,
@@ -285,22 +389,21 @@ class ZendeskApiMarkdownCrawler:
             if (item_id := item.get("id")) is not None and isinstance(item_id, int)
         }
 
+        structure_payload: dict[str, Any] = {
+            "help_center_url": self.help_center_url,
+            "locale": self.locale,
+            "fetched_at": datetime.now(timezone.utc).isoformat(),
+            "category_count": len(categories),
+            "section_count": len(sections),
+            "categories": categories,
+            "sections": sections,
+        }
+
         structure_path = self.output_dir / "knowledge_base_structure.json"
         with open(structure_path, "w", encoding="utf-8") as file:
-            json.dump(
-                {
-                    "help_center_url": self.help_center_url,
-                    "locale": self.locale,
-                    "fetched_at": datetime.now(timezone.utc).isoformat(),
-                    "category_count": len(categories),
-                    "section_count": len(sections),
-                    "categories": categories,
-                    "sections": sections,
-                },
-                file,
-                ensure_ascii=False,
-                indent=2,
-            )
+            json.dump(structure_payload, file, ensure_ascii=False, indent=2)
+
+        self._save_structure_markdown_chunks(structure_payload)
 
         print(
             f"[INFO] Metadata dimuat: {len(categories)} categories, "

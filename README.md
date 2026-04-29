@@ -84,6 +84,7 @@ Saat dijalankan, script akan meminta input seperti root URL, locale, delay, retr
 - Untuk `crawler-api.py` juga tersedia:
   - `raw_json/` (backup response JSON per halaman)
   - `knowledge_base_structure.json` (categories + sections)
+  - `knowledge_base_structure_part_001.md`, dst. (konversi markdown dari structure JSON, auto-split max 490000 kata/file)
   - `state_<domain>_<locale>.json` (checkpoint resume)
 
 ## Catatan Etika dan Kepatuhan
