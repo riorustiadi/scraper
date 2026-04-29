@@ -1,0 +1,10 @@
+# Core HTTP crawler
+httpx[http2]>=0.28.1,<1.0.0
+beautifulsoup4>=4.14.0,<5.0.0
+markdownify>=1.2.0,<2.0.0
+
+# JS-rendered crawler
+playwright>=1.58.0,<2.0.0
+
+# Optional helper for legacy/reference API snippets
+requests>=2.32.0,<3.0.0

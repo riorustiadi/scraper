@@ -2,6 +2,12 @@
 
 Toolkit Python untuk mengekstrak dokumentasi web menjadi Markdown dengan batas maksimal kata per file (default: 490.000 kata).
 
+## Kompatibilitas Runtime
+
+- Direkomendasikan: Python 3.14.4
+- Sudah kompatibel: Python 3.13+
+- OS target: Ubuntu (server/desktop) dan Windows
+
 ## Fitur Utama
 
 - Crawler HTTP biasa untuk situs static/semi-dynamic.
@@ -15,24 +21,34 @@ Toolkit Python untuk mengekstrak dokumentasi web menjadi Markdown dengan batas m
 - `crawler.py`: crawler HTTP/HTML parser (BeautifulSoup + markdownify).
 - `crawler-js.py`: crawler JS-rendered page (Playwright).
 - `crawler-api.py`: crawler Zendesk Help Center API langsung.
+- `requirements.txt`: dependency utama proyek.
 - `api_scraping.txt`: referensi awal script API scraping sederhana.
 
-## Prasyarat
+## Setup Ubuntu (Python 3.14.4)
 
-- Python 3.11+ (disarankan pakai venv)
-- Paket Python:
-  - httpx
-  - beautifulsoup4
-  - markdownify
-  - playwright (untuk `crawler-js.py`)
+Jika Python 3.14.4 sudah terpasang, jalankan:
 
-## Setup Cepat
+```bash
+python3.14 --version
+python3.14 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -r requirements.txt
+python -m playwright install --with-deps chromium
+```
+
+Catatan:
+
+- Opsi `--with-deps` akan memasang dependency sistem yang dibutuhkan browser Playwright di Ubuntu.
+- Jika command default Anda adalah `python`, pastikan menunjuk ke env `.venv` (bukan global).
+
+## Setup Windows (Opsional)
 
 ```powershell
 python -m venv .venv
-.\\.venv\\Scripts\\Activate.ps1
-python -m pip install --upgrade pip
-pip install httpx beautifulsoup4 markdownify playwright
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -r requirements.txt
 python -m playwright install chromium
 ```
 
@@ -40,19 +56,19 @@ python -m playwright install chromium
 
 ### 1) Crawler HTML biasa
 
-```powershell
+```bash
 python crawler.py
 ```
 
 ### 2) Crawler Heavy-JS (Playwright)
 
-```powershell
+```bash
 python crawler-js.py
 ```
 
 ### 3) Crawler Zendesk API
 
-```powershell
+```bash
 python crawler-api.py
 ```
 

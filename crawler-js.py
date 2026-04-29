@@ -99,7 +99,7 @@ class JSMarkdownCrawler:
 
         # Browser fingerprint basics (not bypassing anti-bot, just stable browser-like defaults)
         self.user_agent = (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "Mozilla/5.0 (X11; Linux x86_64) "
             "AppleWebKit/537.36 (KHTML, like Gecko) "
             "Chrome/124.0.0.0 Safari/537.36"
         )
@@ -503,7 +503,7 @@ class JSMarkdownCrawler:
         except ImportError as exc:
             raise RuntimeError(
                 "Playwright belum terpasang. Jalankan: pip install playwright lalu "
-                "python -m playwright install chromium"
+                "python -m playwright install chromium (Ubuntu: python -m playwright install --with-deps chromium)"
             ) from exc
 
         async with async_playwright() as playwright:
@@ -511,12 +511,19 @@ class JSMarkdownCrawler:
                 headless=self.config.headless,
                 args=["--disable-blink-features=AutomationControlled"],
             )
-            context = await browser.new_context(
-                user_agent=self.user_agent,
-                locale="id-ID",
-                timezone_id="Asia/Jakarta",
-                viewport={"width": 1366, "height": 768},
-            )
+            context_options = {
+                "user_agent": self.user_agent,
+                "locale": "id-ID",
+                "timezone_id": "Asia/Jakarta",
+                "viewport": {"width": 1366, "height": 768},
+            }
+            try:
+                context = await browser.new_context(**context_options)
+            except Exception as exc:
+                # Beberapa image Linux server tidak punya timezone data lengkap.
+                print(f"[WARN] Gagal set timezone Asia/Jakarta ({exc}), fallback ke UTC.")
+                context_options["timezone_id"] = "UTC"
+                context = await browser.new_context(**context_options)
 
             try:
                 while self.queue:
