@@ -1,0 +1,24 @@
+# Python cache and virtual environments
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Editor/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Runtime state and logs
+*.log
+state_*.json
+
+# Generated crawl outputs
+crawl_*/
+crawl_api_*/
+crawl_js_*/
+
+# Playwright local cache (optional to keep out of repo)
+ms-playwright/
