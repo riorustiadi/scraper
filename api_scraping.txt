@@ -1,0 +1,79 @@
+import requests
+import json
+import os
+import time
+from markdownify import markdownify as md
+
+# Konfigurasi
+BASE_URL = "https://help-center.talenta.co/api/v2/help_center/id/articles.json?per_page=100"
+MAX_WORDS_PER_FILE = 490000
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
+def count_words(text):
+    return len(text.split())
+
+def scrape_to_markdown():
+    current_url = BASE_URL
+    file_index = 1
+    current_word_count = 0
+    
+    # Inisialisasi file pertama
+    filename = f"talenta_docs_part_{file_index}.md"
+    f = open(filename, "w", encoding="utf-8")
+    
+    print(f"Memulai scraping... File: {filename}")
+
+    while current_url:
+        headers = {"User-Agent": USER_AGENT}
+        response = requests.get(current_url, headers=headers)
+        
+        if response.status_code == 429:
+            print("Terkena rate limit. Menunggu 60 detik...")
+            time.sleep(60)
+            continue
+            
+        data = response.json()
+        articles = data.get("articles", [])
+
+        for article in articles:
+            title = article.get("title", "")
+            html_body = article.get("body", "")
+            article_url = article.get("html_url", "")
+            
+            # Konversi HTML ke Markdown
+            markdown_content = md(html_body)
+            
+            # Susun teks artikel
+            entry = f"\n\n# {title}\n"
+            entry += f"**URL:** {article_url}\n\n"
+            entry += markdown_content
+            entry += "\n\n---\n"
+            
+            words_in_article = count_words(entry)
+            
+            # Cek apakah harus ganti file
+            if current_word_count + words_in_article > MAX_WORDS_PER_FILE:
+                f.close()
+                file_index += 1
+                current_word_count = 0
+                filename = f"talenta_docs_part_{file_index}.md"
+                f = open(filename, "w", encoding="utf-8")
+                print(f"Batas kata tercapai. Menulis ke file baru: {filename}")
+
+            f.write(entry)
+            current_word_count += words_in_article
+
+        print(f"Selesai memproses halaman. Total kata saat ini: {current_word_count}")
+        
+        # Ambil URL halaman berikutnya
+        current_url = data.get("next_page")
+        
+        # Jeda 3 detik agar IP Indihome aman
+        if current_url:
+            time.sleep(3)
+
+    f.close()
+    print("Proses selesai seluruhnya!")
+
+if __name__ == "__main__":
+    scrape_to_markdown()
