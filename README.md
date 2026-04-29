@@ -74,6 +74,11 @@ python crawler-api.py
 
 Saat dijalankan, script akan meminta input seperti root URL, locale, delay, retry, batas halaman, dan batas kata per file.
 
+Khusus `crawler-api.py`, akan ada prompt:
+
+- `Mulai fresh download (abaikan checkpoint lama)?` pilih `y` untuk selalu mulai dari awal.
+- Jika memilih fresh mode, crawler tidak akan melanjutkan checkpoint lama.
+
 ## Output
 
 - Folder hasil dibuat otomatis dengan timestamp, contoh:
@@ -86,6 +91,10 @@ Saat dijalankan, script akan meminta input seperti root URL, locale, delay, retr
   - `knowledge_base_structure.json` (categories + sections)
   - `knowledge_base_structure_part_001.md`, dst. (konversi markdown dari structure JSON, auto-split max 490000 kata/file)
   - `state_<domain>_<locale>.json` (checkpoint resume)
+
+Catatan:
+
+- Jika total konten artikel belum melebihi `max_words_per_file`, maka `docs_dataset` memang bisa hanya 1 file `.md`.
 
 ## Catatan Etika dan Kepatuhan
 

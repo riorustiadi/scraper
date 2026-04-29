@@ -22,6 +22,7 @@ class ZendeskApiConfig:
     request_timeout_seconds: float = 25.0
     max_pages: int = 0
     resume_from_checkpoint: bool = True
+    start_fresh: bool = False
 
     def __post_init__(self) -> None:
         if self.max_words_per_file <= 0:
@@ -83,6 +84,11 @@ class ZendeskApiMarkdownCrawler:
         safe_locale = re.sub(r"[^a-zA-Z0-9._-]", "_", self.locale)
         self.state_file = Path(f"state_{safe_domain}_{safe_locale}.json")
         self.resumed_from_checkpoint = False
+
+        if self.config.start_fresh:
+            self._clear_checkpoint()
+            self.config.resume_from_checkpoint = False
+            print("[INFO] Mode fresh aktif: checkpoint lama diabaikan.")
 
         self.user_agent = (
             "Mozilla/5.0 (X11; Linux x86_64) "
@@ -719,7 +725,8 @@ class ZendeskApiMarkdownCrawler:
 
         print(
             f"[DONE] Selesai. Artikel diproses: {self.processed_articles}, "
-            f"file markdown di: {self.output_dir.as_posix()}"
+            f"docs_dataset file: {self.file_index - 1}, "
+            f"lokasi: {self.output_dir.as_posix()}"
         )
 
 
@@ -783,7 +790,11 @@ def _prompt_settings() -> tuple[str, str, ZendeskApiConfig]:
     max_delay = _prompt_float("Delay maksimum antar halaman (detik)", 2.5, min_delay)
     max_retries = _prompt_int("Maksimal retry per request", 5, 1)
     max_pages = _prompt_int("Batas halaman (0 = tanpa batas)", 0, 0)
-    resume_checkpoint = _prompt_bool("Lanjutkan dari checkpoint jika tersedia?", True)
+    start_fresh = _prompt_bool("Mulai fresh download (abaikan checkpoint lama)?", True)
+    if start_fresh:
+        resume_checkpoint = False
+    else:
+        resume_checkpoint = _prompt_bool("Lanjutkan dari checkpoint jika tersedia?", True)
 
     config = ZendeskApiConfig(
         max_words_per_file=max_words,
@@ -793,6 +804,7 @@ def _prompt_settings() -> tuple[str, str, ZendeskApiConfig]:
         max_retries=max_retries,
         max_pages=max_pages,
         resume_from_checkpoint=resume_checkpoint,
+        start_fresh=start_fresh,
     )
 
     return help_center_url, locale, config
