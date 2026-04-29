@@ -20,5 +20,15 @@ crawl_*/
 crawl_api_*/
 crawl_js_*/
 
+# Generated dedupe artifacts
+duplicates_*.zip
+*_manifest_duplikat.csv
+temp_dupes_*/
+
+# Keep repo focused on code + dependency list
+*.md
+*.txt
+!requirements.txt
+
 # Playwright local cache (optional to keep out of repo)
 ms-playwright/
