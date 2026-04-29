@@ -1,2 +1,0 @@
-# scraper
-scraping for AI
